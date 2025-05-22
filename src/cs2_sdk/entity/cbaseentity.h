@@ -30,8 +30,6 @@
 
 extern CGameConfig *g_GameConfig;
 
-class CGameUI;
-
 class CGameSceneNode
 {
 public:
@@ -189,23 +187,6 @@ public:
 	CEntitySubclassVDataBase* GetVData() { return *(CEntitySubclassVDataBase**)((uint8*)(m_nSubclassID()) + 4); }
 
 	const char* GetName() const { return m_pEntity->m_name.String(); }
-
-	/* Begin Custom Entities Cast */
-
-	[[nodiscard]] CGameUI *AsGameUI()
-	{
-		if (V_strcasecmp(GetClassname(), "logic_case") != 0)
-			return nullptr;
-
-		const auto tag = m_iszPrivateVScripts.IsValid() ? m_iszPrivateVScripts.String() : nullptr;
-
-		if (tag && V_strcasecmp(tag, "game_ui") == 0)
-			return reinterpret_cast<CGameUI *>(this);
-
-		return nullptr;
-	}
-
-	/* End Custom Entities Cast */
 };
 
 class SpawnPoint : public Z_CBaseEntity
