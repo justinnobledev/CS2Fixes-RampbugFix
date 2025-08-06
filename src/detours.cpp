@@ -191,7 +191,7 @@ void TryPlayerMovePre(CCSPlayer_MovementServices *ms, Vector *pFirstDest, trace_
 		// See if we can make it from origin to end point.
 		if (numPlanes == 1)
 		{
-			VectorMA(end, 0.03125f, planes[0], end)
+			VectorMA(end, 0.03125f, planes[0], end);
 		}
 		// If their velocity Z is 0, then we can avoid an extra trace here during WalkMove.
 		if (pFirstDest && end == *pFirstDest)
