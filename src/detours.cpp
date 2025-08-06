@@ -34,7 +34,7 @@
 #include "igameevents.h"
 #include "gameconfig.h"
 #include "serversideclient.h"
-#include "sdk/tracefilter.h"
+#include "tracefilter.h"
 
 #define VPROF_ENABLED
 #include "tier0/vprof.h"
