@@ -34,6 +34,7 @@
 #include "igameevents.h"
 #include "gameconfig.h"
 #include "serversideclient.h"
+#include "tracefilter.h"
 
 #define VPROF_ENABLED
 #include "tier0/vprof.h"
@@ -142,7 +143,7 @@ bool IsValidMovementTrace(trace_t &tr, bbox_t bounds, CTraceFilterPlayerMovement
 #define RAMP_BUG_THRESHOLD 0.99f
 #define RAMP_BUG_VELOCITY_THRESHOLD 0.95f 
 #define NEW_RAMP_THRESHOLD 0.95f
-void TryPlayerMovePre(CCSPlayer_MovementServices *ms, Vector *pFirstDest, trace_t *pFirstTrace)
+void TryPlayerMovePre(CCSPlayer_MovementServices *ms, Vector *pFirstDest, trace_t *pFirstTrace, bool *bIsSurfing)
 {
 	CCSPlayerPawn *pawn = ms->GetPawn();
 	ZEPlayer *player = g_playerManager->GetPlayer(pawn->m_hController()->GetPlayerSlot());
@@ -179,9 +180,7 @@ void TryPlayerMovePre(CCSPlayer_MovementServices *ms, Vector *pFirstDest, trace_
 		bounds.maxs.z = 54;
 	}
 
-	CTraceFilterPlayerMovementCS filter;
-	addresses::InitPlayerMovementTraceFilter(filter, pawn, pawn->m_Collision().m_collisionAttribute().m_nInteractsWith(),
-											  COLLISION_GROUP_PLAYER_MOVEMENT);
+	CTraceFilterPlayerMovementCS filter(pawn);
 
 	bool potentiallyStuck {};
 	
@@ -190,6 +189,10 @@ void TryPlayerMovePre(CCSPlayer_MovementServices *ms, Vector *pFirstDest, trace_
 		// Assume we can move all the way from the current origin to the end point.
 		VectorMA(start, timeLeft, velocity, end);
 		// See if we can make it from origin to end point.
+		if (numPlanes == 1)
+		{
+			VectorMA(end, 0.03125f, planes[0], end);
+		}
 		// If their velocity Z is 0, then we can avoid an extra trace here during WalkMove.
 		if (pFirstDest && end == *pFirstDest)
 		{
@@ -371,7 +374,7 @@ void TryPlayerMovePre(CCSPlayer_MovementServices *ms, Vector *pFirstDest, trace_
 	player->tpmVelocity = velocity;
 }
 
-void TryPlayerMovePost(CCSPlayer_MovementServices *ms)
+void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 {
 	ZEPlayer *player = g_playerManager->GetPlayer(ms->GetPawn()->m_hController()->GetPlayerSlot());
 	if(!player)
@@ -388,11 +391,11 @@ void TryPlayerMovePost(CCSPlayer_MovementServices *ms)
 	}
 }
 
-void FASTCALL Detour_TryPlayerMove(CCSPlayer_MovementServices *ms, CMoveData *mv, Vector *pFirstDest, trace_t *pFirstTrace)
+void FASTCALL Detour_TryPlayerMove(CCSPlayer_MovementServices *ms, CMoveData *mv, Vector *pFirstDest, trace_t *pFirstTrace, bool *bIsSurfing)
 {
-	TryPlayerMovePre(ms, pFirstDest, pFirstTrace);
-	TryPlayerMove(ms, mv, pFirstDest, pFirstTrace);
-	TryPlayerMovePost(ms);
+	TryPlayerMovePre(ms, pFirstDest, pFirstTrace, bIsSurfing);
+	TryPlayerMove(ms, mv, pFirstDest, pFirstTrace, bIsSurfing);
+	TryPlayerMovePost(ms, bIsSurfing);
 }
 
 void CategorizePositionPre(CCSPlayer_MovementServices *ms,bool bStayOnGround)
@@ -421,13 +424,9 @@ void CategorizePositionPre(CCSPlayer_MovementServices *ms,bool bStayOnGround)
 		bounds.maxs.z = 54;
 	}
 
-	CTraceFilterPlayerMovementCS filter;
-	addresses::InitPlayerMovementTraceFilter(filter, pawn,
-											  pawn->m_Collision().m_collisionAttribute().m_nInteractsWith(),
-											  COLLISION_GROUP_PLAYER_MOVEMENT);
+	CTraceFilterPlayerMovementCS filter(pawn);
 
 	trace_t trace;
-	addresses::InitGameTrace(&trace);
 
 	Vector origin, groundOrigin;
 	player->GetOrigin(&origin);

@@ -221,10 +221,6 @@ struct touchlist_t {
 	trace_t trace;
 };
 
-class CTraceFilterPlayerMovementCS : public CTraceFilter
-{
-};
-
 class CTraceFilterHitAllTriggers: public CTraceFilter
 {
 public:

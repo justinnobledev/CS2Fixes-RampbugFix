@@ -51,9 +51,8 @@ bool addresses::Initialize(CGameConfig *g_GameConfig)
 #endif
 
 	RESOLVE_SIG(g_GameConfig, "CBasePlayerController_SetPawn", addresses::CBasePlayerController_SetPawn);
-	RESOLVE_SIG(g_GameConfig, "InitPlayerMovementTraceFilter", addresses::InitPlayerMovementTraceFilter);
 	RESOLVE_SIG(g_GameConfig, "TracePlayerBBox", addresses::TracePlayerBBox);
-	RESOLVE_SIG(g_GameConfig, "InitGameTrace", addresses::InitGameTrace);
+	RESOLVE_SIG(g_GameConfig, "NetworkStateChanged", addresses::NetworkStateChanged);
 	
 	return true;
 }

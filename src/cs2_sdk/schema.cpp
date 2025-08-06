@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2024 Source2ZE
+ * Copyright (C) 2023-2025 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -20,145 +20,130 @@
 #include "schema.h"
 
 #include "../common.h"
-#include "schemasystem/schemasystem.h"
-#include "tier1/utlmap.h"
-#include "tier0/memdbgon.h"
-#include "plat.h"
 #include "entity/cbaseentity.h"
+#include "plat.h"
+#include "schemasystem/schemasystem.h"
 
-extern CGlobalVars *gpGlobals;
+#include "tier0/memdbgon.h"
 
-using SchemaKeyValueMap_t = CUtlMap<uint32_t, SchemaKey>;
-using SchemaTableMap_t = CUtlMap<uint32_t, SchemaKeyValueMap_t*>;
+extern CGlobalVars* GetGlobals();
 
+using SchemaKeyValueMap_t = std::map<uint32_t, SchemaKey>;
+using SchemaTableMap_t = std::map<uint32_t, SchemaKeyValueMap_t>;
 
 static bool IsFieldNetworked(SchemaClassFieldData_t& field)
 {
-    for (int i = 0; i < field.m_nStaticMetadataCount; i++)
-    {
-        static auto networkEnabled = hash_32_fnv1a_const("MNetworkEnable");
-        if (networkEnabled == hash_32_fnv1a_const(field.m_pStaticMetadata[i].m_pszName))
-            return true;
-    }
+	for (int i = 0; i < field.m_nStaticMetadataCount; i++)
+	{
+		static auto networkEnabled = hash_32_fnv1a_const("MNetworkEnable");
+		if (networkEnabled == hash_32_fnv1a_const(field.m_pStaticMetadata[i].m_pszName))
+			return true;
+	}
 
-    return false;
-}   
+	return false;
+}
 
-static bool InitSchemaFieldsForClass(SchemaTableMap_t *tableMap, const char* className, uint32_t classKey)
+static bool InitSchemaFieldsForClass(SchemaTableMap_t& tableMap, const char* className, uint32_t classKey)
 {
-    CSchemaSystemTypeScope* pType = g_pSchemaSystem->FindTypeScopeForModule(MODULE_PREFIX "server" MODULE_EXT);
+	CSchemaSystemTypeScope* pType = g_pSchemaSystem->FindTypeScopeForModule(MODULE_PREFIX "server" MODULE_EXT);
 
-    if (!pType)
-        return false;
+	if (!pType)
+		return false;
 
-    SchemaClassInfoData_t *pClassInfo = pType->FindDeclaredClass(className).Get();
+	SchemaClassInfoData_t* pClassInfo = pType->FindDeclaredClass(className).Get();
 
-    if (!pClassInfo)
-    {
-        SchemaKeyValueMap_t *map = new SchemaKeyValueMap_t(0, 0, DefLessFunc(uint32_t));
-        tableMap->Insert(classKey, map);
+	if (!pClassInfo)
+	{
+		SchemaKeyValueMap_t map;
+		tableMap.insert(std::make_pair(classKey, map));
 
-        Warning("InitSchemaFieldsForClass(): '%s' was not found!\n", className);
-        return false;
-    }
+		Warning("InitSchemaFieldsForClass(): '%s' was not found!\n", className);
+		return false;
+	}
 
-    short fieldsSize = pClassInfo->m_nFieldCount;
-    short dataNumFields = pClassInfo->m_pDataDescMap ? pClassInfo->m_pDataDescMap->dataNumFields : 0;
-    SchemaClassFieldData_t* pFields = pClassInfo->m_pFields;
+	short fieldsSize = pClassInfo->m_nFieldCount;
+	SchemaClassFieldData_t* pFields = pClassInfo->m_pFields;
 
-    SchemaKeyValueMap_t *keyValueMap = new SchemaKeyValueMap_t(0, 0, DefLessFunc(uint32_t));
-    keyValueMap->EnsureCapacity(fieldsSize + dataNumFields);
-    tableMap->Insert(classKey, keyValueMap);
+	SchemaKeyValueMap_t& keyValueMap = tableMap.insert(std::make_pair(classKey, SchemaKeyValueMap_t())).first->second;
 
-    for (int i = 0; i < fieldsSize; ++i)
-    {
-        SchemaClassFieldData_t& field = pFields[i];
+	for (int i = 0; i < fieldsSize; ++i)
+	{
+		SchemaClassFieldData_t& field = pFields[i];
 
 #ifdef _DEBUG
 		Message("%s::%s found at -> 0x%X - %llx\n", className, field.m_pszName, field.m_nSingleInheritanceOffset, &field);
 #endif
 
-        keyValueMap->Insert(hash_32_fnv1a_const(field.m_pszName), {field.m_nSingleInheritanceOffset, IsFieldNetworked(field)});
-    }
+		std::pair<uint32_t, SchemaKey> keyValuePair;
+		keyValuePair.first = hash_32_fnv1a_const(field.m_pszName);
+		keyValuePair.second.offset = field.m_nSingleInheritanceOffset;
+		keyValuePair.second.networked = IsFieldNetworked(field);
 
-    for (int i = 0; i < dataNumFields; ++i)
-    {
-        auto &field = pClassInfo->m_pDataDescMap->dataDesc[i];
+		keyValueMap.insert(keyValuePair);
+	}
 
-        if (!field.fieldName || !field.fieldName[0] || field.fieldOffset < 0)
-        {
-            continue;
-        }
-        if (keyValueMap->Find(hash_32_fnv1a_const(field.fieldName)) != keyValueMap->InvalidIndex())
-        {
-            continue;
-        }
-        keyValueMap->Insert(hash_32_fnv1a_const(field.fieldName), {field.fieldOffset, false});
-    }
-
-    return true;
+	return true;
 }
 
 int16_t schema::FindChainOffset(const char* className)
 {
-    CSchemaSystemTypeScope* pType = g_pSchemaSystem->FindTypeScopeForModule(MODULE_PREFIX "server" MODULE_EXT);
+	CSchemaSystemTypeScope* pType = g_pSchemaSystem->FindTypeScopeForModule(MODULE_PREFIX "server" MODULE_EXT);
 
-    if (!pType)
-        return false;
+	if (!pType)
+		return false;
 
-    SchemaClassInfoData_t* pClassInfo = pType->FindDeclaredClass(className).Get();
+	SchemaClassInfoData_t* pClassInfo = pType->FindDeclaredClass(className).Get();
 
-    do
-    {
-        SchemaClassFieldData_t* pFields = pClassInfo->m_pFields;
-        short fieldsSize = pClassInfo->m_nFieldCount;
-        for (int i = 0; i < fieldsSize; ++i)
-        {
-            SchemaClassFieldData_t& field = pFields[i];
+	do
+	{
+		SchemaClassFieldData_t* pFields = pClassInfo->m_pFields;
+		short fieldsSize = pClassInfo->m_nFieldCount;
+		for (int i = 0; i < fieldsSize; ++i)
+		{
+			SchemaClassFieldData_t& field = pFields[i];
 
-            if (V_strcmp(field.m_pszName, "__m_pChainEntity") == 0)
-            {
-                return field.m_nSingleInheritanceOffset;
-            }
-        }
-    } while ((pClassInfo = pClassInfo->m_pBaseClasses ? pClassInfo->m_pBaseClasses->m_pClass : nullptr) != nullptr);
+			if (V_strcmp(field.m_pszName, "__m_pChainEntity") == 0)
+				return field.m_nSingleInheritanceOffset;
+		}
+	} while ((pClassInfo = pClassInfo->m_pBaseClasses ? pClassInfo->m_pBaseClasses->m_pClass : nullptr) != nullptr);
 
-    return 0;
+	return 0;
 }
 
 SchemaKey schema::GetOffset(const char* className, uint32_t classKey, const char* memberName, uint32_t memberKey)
 {
-	static SchemaTableMap_t schemaTableMap(0, 0, DefLessFunc(uint32_t));
-	int16_t tableMapIndex = schemaTableMap.Find(classKey);
-    if (!schemaTableMap.IsValidIndex(tableMapIndex))
-    {
-        if (InitSchemaFieldsForClass(&schemaTableMap, className, classKey))
-            return GetOffset(className, classKey, memberName, memberKey);
+	static SchemaTableMap_t schemaTableMap;
 
-        return { 0, 0 };
-    }
+	if (!schemaTableMap.contains(classKey))
+	{
+		if (InitSchemaFieldsForClass(schemaTableMap, className, classKey))
+			return GetOffset(className, classKey, memberName, memberKey);
 
-    SchemaKeyValueMap_t *tableMap = schemaTableMap[tableMapIndex];
-	int16_t memberIndex = tableMap->Find(memberKey);
-    if (!tableMap->IsValidIndex(memberIndex))
-    {
-        Warning("schema::GetOffset(): '%s' was not found in '%s'!\n", memberName, className);
-        return { 0, 0 };
-    }
+		return {0, 0};
+	}
 
-    return tableMap->Element(memberIndex);
+	SchemaKeyValueMap_t tableMap = schemaTableMap[classKey];
+
+	if (!tableMap.contains(memberKey))
+	{
+		Warning("schema::GetOffset(): '%s' was not found in '%s'!\n", memberName, className);
+		return {0, 0};
+	}
+
+	return tableMap[memberKey];
 }
 
-void EntityNetworkStateChanged(uintptr_t entityInstance, uint nOffset)
+void NetworkStateChanged(uintptr_t chainEntity, uint32_t offset, uint32_t nArrayIndex, uint32_t nPathIndex)
 {
-    reinterpret_cast<CEntityInstance*>(entityInstance)->NetworkStateChanged(nOffset);
+	CNetworkStateChangedInfo info(offset, nArrayIndex, nPathIndex);
+
+	addresses::NetworkStateChanged(reinterpret_cast<void*>(chainEntity), info);
 }
 
-void ChainNetworkStateChanged(uintptr_t networkVarChainer, uint nLocalOffset)
+void SetStateChanged(uintptr_t pEntity, uint32_t offset, uint32_t nArrayIndex, uint32_t nPathIndex)
 {
-    CEntityInstance* pEntity = *reinterpret_cast<CEntityInstance**>(networkVarChainer);
-    if (pEntity && (pEntity->m_pEntity->m_flags & EF_IS_CONSTRUCTION_IN_PROGRESS) == 0)
-    {
-        pEntity->NetworkStateChanged(nLocalOffset, -1, *reinterpret_cast<ChangeAccessorFieldPathIndex_t*>(networkVarChainer + 32));
-    }
+	CNetworkStateChangedInfo info(offset, nArrayIndex, nPathIndex);
+
+	static auto fnOffset = g_GameConfig->GetOffset("CBaseEntity::StateChanged");
+	CALL_VIRTUAL(void, fnOffset, (void*)pEntity, &info);
 }
