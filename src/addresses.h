@@ -54,6 +54,7 @@ class CEntityKeyValues;
 class IRecipientFilter;
 class CTraceFilterPlayerMovementCS;
 class CTraceFilter;
+class CNetworkStateChangedInfo;
 struct bbox_t;
 
 struct SndOpEventGuid_t;
@@ -63,7 +64,7 @@ namespace addresses
 	bool Initialize(CGameConfig *g_GameConfig);
 
 	inline void(FASTCALL *CBasePlayerController_SetPawn)(CBasePlayerController *pController, CCSPlayerPawn *pPawn, bool a3, bool a4);
-
+	inline void(FASTCALL* NetworkStateChanged)(void* chainEntity, CNetworkStateChangedInfo& info);
 	// typedef void InitPlayerMovementTraceFilter_t(CTraceFilterPlayerMovementCS &pFilter, CEntityInstance *pHandleEntity, uint64_t interactWith, int collisionGroup);
 	// typedef void TracePlayerBBox_t(const Vector &start, const Vector &end, const bbox_t &bounds, CTraceFilterPlayerMovementCS *filter, trace_t_s2 &pm);
 	inline void(FASTCALL *TracePlayerBBox)(const Vector &start, const Vector &end, const bbox_t &bounds, CTraceFilter *filter, trace_t &pm);
