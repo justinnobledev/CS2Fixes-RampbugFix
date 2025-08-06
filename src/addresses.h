@@ -52,8 +52,6 @@ class IEntityFindFilter;
 class CGameRules;
 class CEntityKeyValues;
 class IRecipientFilter;
-class CTraceFilterPlayerMovementCS;
-class CTraceFilter;
 class CNetworkStateChangedInfo;
 struct bbox_t;
 
