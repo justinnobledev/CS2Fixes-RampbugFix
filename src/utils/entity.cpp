@@ -37,6 +37,9 @@ class Z_CBaseEntity;
 
 Z_CBaseEntity *UTIL_FindPickerEntity(CBasePlayerController *pPlayer)
 {
+	if (!g_pGameRules)
+		return nullptr;
+	
 	static int offset = g_GameConfig->GetOffset("CGameRules_FindPickerEntity");
 
 	if (offset < 0)
