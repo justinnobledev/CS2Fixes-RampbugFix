@@ -271,7 +271,7 @@ const char *CS2Fixes::GetLogTag()
 
 const char *CS2Fixes::GetAuthor()
 {
-	return "xen, Poggu, and the Source2ZE community (reduced by interesting with rampfix by zer0)";
+	return "xen, Poggu, and the Source2ZE community (reduced by interesting with rampfix by zer0, maintained by rcnoob)";
 }
 
 const char *CS2Fixes::GetDescription()
