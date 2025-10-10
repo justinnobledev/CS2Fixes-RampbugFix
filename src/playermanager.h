@@ -113,6 +113,9 @@ public:
 	void SetOrigin(const Vector &origin);
 	void GetOrigin(Vector *origin);
 
+	void GetEyeAngles(QAngle *angles);
+	void SetEyeAngles(const QAngle &angles);
+
 	bool didTPM {};
 	bool overrideTPM {};
 	Vector tpmVelocity = vec3_invalid;

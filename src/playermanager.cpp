@@ -243,3 +243,36 @@ void ZEPlayer::SetVelocity(const Vector &velocity)
 		pawn->Teleport(NULL, NULL, &velocity);
 	}
 }
+
+void ZEPlayer::GetEyeAngles(QAngle *angles)
+{
+	if (this->processingMovement && this->currentMoveData)
+	{
+		*angles = this->currentMoveData->m_vecViewAngles;
+	}
+	else
+	{
+		auto *pawn = this->GetPawn();
+		if (!pawn)
+		{
+			return;
+		}
+		*angles = pawn->m_angEyeAngles();
+	}
+}
+
+void ZEPlayer::SetEyeAngles(const QAngle &angles)
+{
+	if (this->processingMovement && this->currentMoveData)
+	{
+		this->currentMoveData->m_vecViewAngles = angles;
+	}else
+	{
+		auto *pawn = this->GetPawn();
+		if (!pawn)
+		{
+			return;
+		}
+		pawn->Teleport(NULL, &angles, NULL);
+	}
+}

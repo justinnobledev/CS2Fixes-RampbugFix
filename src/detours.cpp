@@ -36,6 +36,9 @@
 #include "serversideclient.h"
 #include "tracefilter.h"
 
+#include <cmath>
+
+
 #define VPROF_ENABLED
 #include "tier0/vprof.h"
 
@@ -380,6 +383,38 @@ void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 	bool velocityHeavilyModified =
 		player->tpmVelocity.Normalized().Dot(velocity.Normalized()) < RAMP_BUG_THRESHOLD
 		|| (player->tpmVelocity.Length() > 50.0f && velocity.Length() / player->tpmVelocity.Length() < RAMP_BUG_VELOCITY_THRESHOLD);
+
+	QAngle angles;
+	player->GetEyeAngles(&angles);
+	if (angles.x > 15)
+	{
+		constexpr float DEG2RAD = 3.14159265f / 180.0f;
+
+		// Compute forward vector inline
+		float cp = std::cos(angles.x * DEG2RAD);
+		float sp = std::sin(angles.x * DEG2RAD);
+		float cy = std::cos(angles.y * DEG2RAD);
+		float sy = std::sin(angles.y * DEG2RAD);
+
+		// Forward direction
+		float fx = cp * cy;
+		float fy = cp * sy;
+		float fz = -sp;
+
+		// Example base velocity and boost
+		float speed = 10.0f;
+		float boost = 1.05f;  // +5%
+
+		// Apply boosted forward velocity inline
+		float vx = fx * speed * boost;
+		float vy = fy * speed * boost;
+		float vz = fz * speed * boost;
+		velocity.x += vx;
+		velocity.y += vy;
+		velocity.z += vz;
+		player->SetVelocity(velocity);
+	}
+	
 	if (player->overrideTPM && velocityHeavilyModified && player->tpmOrigin != vec3_invalid && player->tpmVelocity != vec3_invalid)
 	{
 		player->SetOrigin(player->tpmOrigin);
