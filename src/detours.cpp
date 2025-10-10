@@ -375,7 +375,7 @@ void TryPlayerMovePre(CCSPlayer_MovementServices *ms, Vector *pFirstDest, trace_
 
 
 FAKE_BOOL_CVAR(cs2f_fix_ramp_velo, "Fixes ramp velo bugs when enabled.", g_bFixRampVeloBugs, true, false);
-FAKE_FLOAT_CVAR(cs2f_ramp_velo_threshold, "Threshold for ramp eye angle fixes. (0.0 - 90.0, default 15)", g_flRampVeloBugThreshold, 15f, false, false);
+FAKE_FLOAT_CVAR(cs2f_ramp_velo_threshold, "Threshold for ramp eye angle fixes. (0.0 - 90.0, default 15)", g_flRampVeloBugThreshold, 15.0f, false, false);
 FAKE_FLOAT_CVAR(cs2f_ramp_velo_speedboost, "Speed boost applied when looking down on a ramp. (default 1.05)", g_flRampVeloBugSpeedBoost, 1.05f, false, false);
 void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 {
@@ -409,7 +409,7 @@ void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 		float speed = std::sqrt(velocity.x * velocity.x +
                         velocity.y * velocity.y +
                         velocity.z * velocity.z);
-		float boost = cs2f_ramp_velo_speedboost;  // +5%
+		float boost = cs2f_ramp_velo_speedboost - 1.0f;  // +5%
 
 		// Apply boosted forward velocity inline
 		float vx = fx * speed * boost;
