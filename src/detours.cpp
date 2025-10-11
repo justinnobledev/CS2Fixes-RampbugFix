@@ -373,9 +373,6 @@ void TryPlayerMovePre(CCSPlayer_MovementServices *ms, Vector *pFirstDest, trace_
 	player->tpmVelocity = velocity;
 }
 
-CConVar<bool> cs2f_fix_ramp_velo("cs2f_fix_ramp_velo", FCVAR_NONE, "Fixes ramp velo bugs when enabled.", true);
-CConVar<float> cs2f_ramp_velo_threshold("cs2f_ramp_velo_threshold", FCVAR_NONE, "Threshold for ramp eye angle fixes. (0.0 - 90.0, default 15)", 15.0f);
-CConVar<float> cs2f_ramp_velo_speedboost("cs2f_ramp_velo_speedboost", FCVAR_NONE, "Speed boost applied when looking down on a ramp. (default 1.05)", 1.05f);
 void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 {
 	ZEPlayer *player = g_playerManager->GetPlayer(ms->GetPawn()->m_hController()->GetPlayerSlot());
@@ -389,7 +386,7 @@ void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 
 	QAngle angles;
 	player->GetEyeAngles(&angles);
-	if (angles.x > cs2f_ramp_velo_threshold.Get() && cs2f_fix_ramp_velo.Get())
+	if (angles.x > 15)
 	{
 		constexpr float DEG2RAD = 3.14159265f / 180.0f;
 
@@ -408,7 +405,7 @@ void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 		float speed = std::sqrt(velocity.x * velocity.x +
                         velocity.y * velocity.y +
                         velocity.z * velocity.z);
-		float boost = cs2f_ramp_velo_speedboost.Get() - 1.0f;  // +5%
+		float boost = 1.05f - 1.0f;  // +5%
 
 		// Apply boosted forward velocity inline
 		float vx = fx * speed * boost;
