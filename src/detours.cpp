@@ -386,7 +386,7 @@ void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 
 	QAngle angles;
 	player->GetEyeAngles(&angles);
-	if (angles.x < -15 && bIsSurfing)
+	if (angles.x < -15 && bIsSurfing && *bIsSurfing)
 	{
 		constexpr float DEG2RAD = 3.14159265f / 180.0f;
 
