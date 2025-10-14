@@ -67,7 +67,7 @@ void FASTCALL Detour_ProcessMovement(CCSPlayer_MovementServices *pThis, void *pM
 	player->processingMovement = true;
 
 	ProcessMovement(pThis, pMove);
-	
+
 	if(!player->didTPM)
 		player->lastValidPlane = vec3_origin;
 	
@@ -386,7 +386,7 @@ void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 
 	QAngle angles;
 	player->GetEyeAngles(&angles);
-	if (angles.x > 15)
+	if (angles.x < -15 && bIsSurfing)
 	{
 		constexpr float DEG2RAD = 3.14159265f / 180.0f;
 
@@ -405,7 +405,7 @@ void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 		float speed = std::sqrt(velocity.x * velocity.x +
                         velocity.y * velocity.y +
                         velocity.z * velocity.z);
-		float boost = 1.05f - 1.0f;  // +5%
+		float boost = 1.005f - 1.0f;  // +.5%
 
 		// Apply boosted forward velocity inline
 		float vx = fx * speed * boost;
@@ -414,6 +414,19 @@ void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 		velocity.x += vx;
 		velocity.y += vy;
 		velocity.z += vz;
+
+		// Clamp total speed to 4096
+		float newSpeed = std::sqrt(velocity.x * velocity.x +
+								   velocity.y * velocity.y +
+								   velocity.z * velocity.z);
+		if (newSpeed > 4096.0f)
+		{
+			float scale = 4096.0f / newSpeed;
+			velocity.x *= scale;
+			velocity.y *= scale;
+			velocity.z *= scale;
+		}
+
 		player->SetVelocity(velocity);
 	}
 	
