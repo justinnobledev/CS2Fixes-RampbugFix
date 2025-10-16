@@ -384,51 +384,51 @@ void TryPlayerMovePost(CCSPlayer_MovementServices *ms, bool *bIsSurfing)
 		player->tpmVelocity.Normalized().Dot(velocity.Normalized()) < RAMP_BUG_THRESHOLD
 		|| (player->tpmVelocity.Length() > 50.0f && velocity.Length() / player->tpmVelocity.Length() < RAMP_BUG_VELOCITY_THRESHOLD);
 
-	QAngle angles;
-	player->GetEyeAngles(&angles);
-	if (angles.x < -15 && bIsSurfing && *bIsSurfing)
-	{
-		constexpr float DEG2RAD = 3.14159265f / 180.0f;
-
-		// Compute forward vector inline
-		float cp = std::cos(angles.x * DEG2RAD);
-		float sp = std::sin(angles.x * DEG2RAD);
-		float cy = std::cos(angles.y * DEG2RAD);
-		float sy = std::sin(angles.y * DEG2RAD);
-
-		// Forward direction
-		float fx = cp * cy;
-		float fy = cp * sy;
-		float fz = -sp;
-
-		// Example base velocity and boost
-		float speed = std::sqrt(velocity.x * velocity.x +
-                        velocity.y * velocity.y +
-                        velocity.z * velocity.z);
-		float boost = 1.005f - 1.0f;  // +.5%
-
-		// Apply boosted forward velocity inline
-		float vx = fx * speed * boost;
-		float vy = fy * speed * boost;
-		float vz = fz * speed * boost;
-		velocity.x += vx;
-		velocity.y += vy;
-		velocity.z += vz;
-
-		// Clamp total speed to 4096
-		float newSpeed = std::sqrt(velocity.x * velocity.x +
-								   velocity.y * velocity.y +
-								   velocity.z * velocity.z);
-		if (newSpeed > 4096.0f)
-		{
-			float scale = 4096.0f / newSpeed;
-			velocity.x *= scale;
-			velocity.y *= scale;
-			velocity.z *= scale;
-		}
-
-		player->SetVelocity(velocity);
-	}
+	// QAngle angles;
+	// player->GetEyeAngles(&angles);
+	// if (angles.x < -15 && bIsSurfing && *bIsSurfing)
+	// {
+	// 	constexpr float DEG2RAD = 3.14159265f / 180.0f;
+ //
+	// 	// Compute forward vector inline
+	// 	float cp = std::cos(angles.x * DEG2RAD);
+	// 	float sp = std::sin(angles.x * DEG2RAD);
+	// 	float cy = std::cos(angles.y * DEG2RAD);
+	// 	float sy = std::sin(angles.y * DEG2RAD);
+ //
+	// 	// Forward direction
+	// 	float fx = cp * cy;
+	// 	float fy = cp * sy;
+	// 	float fz = -sp;
+ //
+	// 	// Example base velocity and boost
+	// 	float speed = std::sqrt(velocity.x * velocity.x +
+ //                        velocity.y * velocity.y +
+ //                        velocity.z * velocity.z);
+	// 	float boost = 1.005f - 1.0f;  // +.5%
+ //
+	// 	// Apply boosted forward velocity inline
+	// 	float vx = fx * speed * boost;
+	// 	float vy = fy * speed * boost;
+	// 	float vz = fz * speed * boost;
+	// 	velocity.x += vx;
+	// 	velocity.y += vy;
+	// 	velocity.z += vz;
+ //
+	// 	// Clamp total speed to 4096
+	// 	float newSpeed = std::sqrt(velocity.x * velocity.x +
+	// 							   velocity.y * velocity.y +
+	// 							   velocity.z * velocity.z);
+	// 	if (newSpeed > 4096.0f)
+	// 	{
+	// 		float scale = 4096.0f / newSpeed;
+	// 		velocity.x *= scale;
+	// 		velocity.y *= scale;
+	// 		velocity.z *= scale;
+	// 	}
+ //
+	// 	player->SetVelocity(velocity);
+	// }
 	
 	if (player->overrideTPM && velocityHeavilyModified && player->tpmOrigin != vec3_invalid && player->tpmVelocity != vec3_invalid)
 	{
